@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUD with PHP Backend</title>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>CRUD App (Frontend)</h2>
+
+  <input type="text" id="name" placeholder="Enter name" />
+  <button onclick="addUser()">Add</button>
+  <button onclick="updateUser()" id="updateBtn" style="display:none;">Update</button>
+
+  <ul id="userList"></ul>
+
+  <script>
+    const API_BASE = "https://yourfreedbhost/api"; // Change to your actual PHP API URL
+    let editId = null;
+
+    // Fetch and display users
+    function getUsers() {
+      fetch(`${API_BASE}/read.php`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("userList");
+          list.innerHTML = "";
+          data.forEach(user => {
+            list.innerHTML += `
+              <li>
+                ${user.name}
+                <button onclick="editUser(${user.id}, '${user.name}')">Edit</button>
+                <button onclick="deleteUser(${user.id})">Delete</button>
+              </li>
+            `;
+          });
+        });
+    }
+
+    // Create user
+    function addUser() {
+      const name = document.getElementById("name").value;
+      if (!name) return;
+
+      fetch(`${API_BASE}/create.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      }).then(() => {
+        document.getElementById("name").value = "";
+        getUsers();
+      });
+    }
+
+    // Set up user to edit
+    function editUser(id, name) {
+      document.getElementById("name").value = name;
+      document.getElementById("updateBtn").style.display = "inline-block";
+      editId = id;
+    }
+
+    // Update user
+    function updateUser() {
+      const name = document.getElementById("name").value;
+      if (!name || !editId) return;
+
+      fetch(`${API_BASE}/update.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editId, name })
+      }).then(() => {
+        document.getElementById("name").value = "";
+        document.getElementById("updateBtn").style.display = "none";
+        editId = null;
+        getUsers();
+      });
+    }
+
+    // Delete user
+    function deleteUser(id) {
+      fetch(`${API_BASE}/delete.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      }).then(() => getUsers());
+    }
+
+    // Load users on start
+    getUsers();
+  </script>
+</body>
+</html>
